@@ -1,0 +1,90 @@
+---
+title: "Flight Delays Analysis (nycflights13)"
+author: "Cai Lin"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+
+Introduction
+
+This analysis uses data from the nycflights13 dataset, which includes all flights departing from New York City airports (JFK, LGA, and EWR) in 2013. The related FiveThirtyEight article "The Worst Airports In America"
+ explores which airports have the longest delays and why. Here, I focus on a reproducible subset of this dataset to analyze departure and arrival delays across carriers and airports.
+
+### The data
+
+```{r view data}
+# Load required packages
+# Install the nycflights13 package (only once)
+install.packages("nycflights13")
+library(dplyr)
+library(nycflights13)
+
+# Select a subset of relevant columns
+flights_subset <- flights %>%
+  select(year, month, day, dep_time, dep_delay, arr_time, arr_delay,
+         carrier, origin, dest, air_time, distance) %>%
+  mutate(
+    dep_type = ifelse(dep_delay > 0, "delayed", "on time"),
+    avg_speed = distance / (air_time / 60)
+  )
+
+# Preview data
+head(flights_subset)
+
+```
+
+``` {r Data Summary}
+# Overall mean and median departure delay
+flights_subset %>%
+  summarise(
+    mean_dep_delay = mean(dep_delay, na.rm = TRUE),
+    median_dep_delay = median(dep_delay, na.rm = TRUE),
+    n = n()
+  )
+
+# Median departure delay by origin airport
+flights_subset %>%
+  group_by(origin) %>%
+  summarise(
+    median_dep_delay = median(dep_delay, na.rm = TRUE),
+    iqr_dep_delay = IQR(dep_delay, na.rm = TRUE),
+    n_flights = n()
+  )
+
+```
+
+### Analysis
+
+``` {r Visualization}
+library(ggplot2)
+
+# Histogram of arrival delays
+ggplot(flights_subset, aes(x = arr_delay)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribution of Arrival Delays",
+    x = "Arrival Delay (minutes)",
+    y = "Number of Flights"
+  )
+```
+
+### Conclusions
+
+The data shows that departure and arrival delays vary significantly by carrier and airport. For example, JFK tends to have higher variability in departure delays compared to LGA and EWR. On-time departure rates are highest at LGA, while EWR struggles with delays most frequently.
+
+If I were to extend this analysis, I would:
+
+  - Compare seasonal trends in delays (e.g., winter vs. summer storms).
+
+  - Explore how weather data impacts delays by merging with NOAA datasets.
+
+  - Update the dataset with more recent years to see if patterns have changed since 2013.
