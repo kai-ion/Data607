@@ -1,0 +1,116 @@
+---
+title: "Classification Performance Metrics - Penguin Dataset"
+author: "Cai Lin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r loading} 
+# --- Load required packages ---
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(knitr)
+
+
+# --- Load the CSV ---
+penguins <- read_csv("https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv")
+
+# Quick look
+head(penguins)
+```
+
+```{r distributionPlot} 
+# Count actual classes
+class_counts <- penguins %>%
+  count(sex)
+
+# Calculate null error rate (majority class)
+majority_class <- max(class_counts$n)
+total_obs <- sum(class_counts$n)
+null_error_rate <- 1 - (majority_class / total_obs)
+null_error_rate
+
+# Distribution plot
+ggplot(penguins, aes(x = sex, fill = sex)) +
+  geom_bar() +
+  theme_minimal() +
+  labs(title = "Distribution of Actual Sex in Penguin Dataset",
+       x = "Sex",
+       y = "Count")
+```
+### Null Error Rate
+The null error rate represents the error rate if we always predicted the majority class. It provides a baseline to evaluate if the model is actually performing better than naive guessing.
+
+
+
+```{r computer threshhold} 
+# Function to compute confusion matrix
+conf_matrix <- function(df, threshold) {
+  df <- df %>%
+    mutate(pred_class = ifelse(.pred_female > threshold, 1, 0),
+           actual_class = ifelse(sex == "female", 1, 0))
+  
+  TP <- sum(df$pred_class == 1 & df$actual_class == 1)
+  FP <- sum(df$pred_class == 1 & df$actual_class == 0)
+  TN <- sum(df$pred_class == 0 & df$actual_class == 0)
+  FN <- sum(df$pred_class == 0 & df$actual_class == 1)
+  
+  tibble(
+    Threshold = threshold,
+    TP = TP,
+    FP = FP,
+    TN = TN,
+    FN = FN
+  )
+}
+
+# Compute for thresholds 0.2, 0.5, 0.8
+cm_02 <- conf_matrix(penguins, 0.2)
+cm_05 <- conf_matrix(penguins, 0.5)
+cm_08 <- conf_matrix(penguins, 0.8)
+
+# Combine for display
+confusion_matrices <- bind_rows(cm_02, cm_05, cm_08)
+kable(confusion_matrices)
+```
+
+```{r calculate metrics} 
+# Function to calculate metrics
+calc_metrics <- function(cm) {
+  accuracy <- (cm$TP + cm$TN) / (cm$TP + cm$FP + cm$TN + cm$FN)
+  precision <- ifelse(cm$TP + cm$FP == 0, NA, cm$TP / (cm$TP + cm$FP))
+  recall <- ifelse(cm$TP + cm$FN == 0, NA, cm$TP / (cm$TP + cm$FN))
+  f1 <- ifelse(is.na(precision) | is.na(recall) | (precision + recall) == 0, NA,
+               2 * precision * recall / (precision + recall))
+  
+  tibble(
+    Threshold = cm$Threshold,
+    Accuracy = round(accuracy, 3),
+    Precision = round(precision, 3),
+    Recall = round(recall, 3),
+    F1_Score = round(f1, 3)
+  )
+}
+
+metrics_table <- bind_rows(
+  calc_metrics(cm_02),
+  calc_metrics(cm_05),
+  calc_metrics(cm_08)
+)
+
+kable(metrics_table)
+```
+
+### ThreshHolds
+Threshold 0.2:
+Useful when missing a positive prediction is costly. For example, identifying female penguins for breeding programs
+you want to catch as many females as possible, even if some males are falsely included.
+
+Threshold 0.8:
+Useful when false positives are costly. For example, sending only highly confident females for medical testing
+we want fewer mistakes even if we miss some females.
+
+
+
+
