@@ -16,8 +16,7 @@ library(openintro)
 
 Introduction
 
-This analysis uses data from the nycflights13 dataset, which includes all flights departing from New York City airports (JFK, LGA, and EWR) in 2013. The related FiveThirtyEight article "The Worst Airports In America"
- explores which airports have the longest delays and why. Here, I focus on a reproducible subset of this dataset to analyze departure and arrival delays across carriers and airports.
+This analysis uses data from the nycflights13 dataset, which includes all flights departing from New York City airports (JFK, LGA, and EWR) in 2013. The related FiveThirtyEight article "The Worst Airports In America" explores which airports have the longest delays and why. Here, I focus on a reproducible subset of this dataset to analyze departure and arrival delays across carriers and airports.
 
 ### The data
 
@@ -42,7 +41,7 @@ head(flights_subset)
 
 ```
 
-``` {r Data Summary}
+```{r Data Summary}
 # Overall mean and median departure delay
 flights_subset %>%
   summarise(
@@ -64,7 +63,7 @@ flights_subset %>%
 
 ### Analysis
 
-``` {r Visualization}
+```{r Visualization}
 library(ggplot2)
 
 # Histogram of arrival delays
@@ -83,8 +82,8 @@ The data shows that departure and arrival delays vary significantly by carrier a
 
 If I were to extend this analysis, I would:
 
-  - Compare seasonal trends in delays (e.g., winter vs. summer storms).
+-   Compare seasonal trends in delays (e.g., winter vs. summer storms).
 
-  - Explore how weather data impacts delays by merging with NOAA datasets.
+-   Explore how weather data impacts delays by merging with NOAA datasets.
 
-  - Update the dataset with more recent years to see if patterns have changed since 2013.
+-   Update the dataset with more recent years to see if patterns have changed since 2013.
