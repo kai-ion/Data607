@@ -1,0 +1,115 @@
+---
+title: "Assignment3A"
+author: "Cai Lin"
+date: "2025-09-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(knitr)
+```
+
+```{r data-setup, message=FALSE, warning=FALSE}
+# Read the wide ratings matrix from the provided spreadsheet
+xlsxPath <- "MovieRatings.xlsx"   # keep the file in the same directory as the .Rmd
+mr <- read_excel(xlsxPath, sheet = "MovieRatings")
+
+stopifnot("Critic" %in% names(mr))
+itemCols <- setdiff(names(mr), "Critic")
+mr[itemCols] <- lapply(mr[itemCols], function(col) suppressWarnings(as.numeric(col)))
+
+long <- mr %>%
+  pivot_longer(cols = all_of(itemCols), names_to = "movie_name", values_to = "rating") %>%
+  rename(friend_name = Critic) %>%
+  filter(!is.na(rating))
+
+friends <- long %>%
+  distinct(friend_name) %>%
+  arrange(friend_name) %>%
+  mutate(friend_id = row_number()) %>%
+  select(friend_id, friend_name)
+
+movies <- long %>%
+  distinct(movie_name) %>%
+  arrange(movie_name) %>%
+  mutate(movie_id = row_number()) %>%
+  select(movie_id, movie_name)
+
+full_ratings <- long %>%
+  left_join(friends, by = "friend_name") %>%
+  left_join(movies,  by = "movie_name") %>%
+  select(friend_id, friend_name, movie_id, movie_name, rating)
+
+kable(head(full_ratings, 8))
+```
+
+```{r Global_Baseline}
+clamp <- function(x, lo = 1, hi = 5) pmin(pmax(x, lo), hi)
+
+mu <- mean(full_ratings$rating, na.rm = TRUE)
+
+user_bias <- full_ratings %>%
+  group_by(friend_id, friend_name) %>%
+  summarise(bu = mean(rating, na.rm = TRUE) - mu, .groups = "drop")
+
+item_bias <- full_ratings %>%
+  group_by(movie_id, movie_name) %>%
+  summarise(bi = mean(rating, na.rm = TRUE) - mu, .groups = "drop")
+
+predictions <- expand_grid(
+    friend_id = unique(full_ratings$friend_id),
+    movie_id  = unique(full_ratings$movie_id)
+  ) %>%
+  left_join(distinct(friends, friend_id, friend_name), by = "friend_id") %>%
+  left_join(distinct(movies,  movie_id,  movie_name),  by = "movie_id") %>%
+  left_join(select(full_ratings, friend_id, movie_id, rating), by = c("friend_id","movie_id")) %>%
+  left_join(user_bias, by = c("friend_id","friend_name")) %>%
+  left_join(item_bias, by = c("movie_id","movie_name")) %>%
+  mutate(
+    bu = ifelse(is.na(bu), 0, bu),
+    bi = ifelse(is.na(bi), 0, bi),
+    pred = clamp(mu + bu + bi),
+    missing = is.na(rating)
+  ) %>%
+  arrange(friend_name, movie_name)
+
+# Show the core model pieces
+kable(tibble(GlobalMean = mu), digits = 3)
+kable(head(user_bias, 10), caption = "User Bias (b_u)", digits = 3)
+kable(head(item_bias, 10), caption = "Item Bias (b_i)", digits = 3)
+
+kable(head(select(predictions, friend_name, movie_name, rating, pred), 12),
+      caption = "Sample Predictions", digits = 2)
+
+```
+
+
+```{r Top_N}
+# Top-N recommendations per friend for unseen movies
+recommend_top_n <- function(pred_df, friend_id, n = 3) {
+  pred_df %>%
+    filter(friend_id == !!friend_id, missing) %>%
+    arrange(desc(pred), movie_name) %>%
+    slice_head(n = n) %>%
+    select(friend_name, movie_name, predicted_rating = pred)
+}
+
+# Show Top 3 for each friend in a single table
+top3_all <- predictions %>%
+  filter(missing) %>%
+  group_by(friend_id, friend_name) %>%
+  slice_max(order_by = pred, n = 3, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(friend_name, movie_name, predicted_rating = pred)
+
+kable(top3_all, caption = "Top 3 Recommendations per Friend", digits = 2)
+
+write.csv(select(predictions, friend_name, movie_name, rating, pred),
+           "predictions_global_baseline.csv", row.names = FALSE)
+write.csv(top3_all, "top3_per_friend.csv", row.names = FALSE)
+
+```
