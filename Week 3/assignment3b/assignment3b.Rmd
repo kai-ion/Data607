@@ -1,0 +1,43 @@
+---
+title: "assignment3b"
+author: "Cai Lin"
+date: "2025-09-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(lubridate)
+library(slider)
+```
+
+
+
+```{r dataset}
+set.seed(42)
+make_series <- function(symbol, start = as.Date("2022-01-01"), days = 180) {
+  dates  <- seq.Date(start, by = "day", length.out = days)
+  steps  <- rnorm(length(dates), 0, 1)
+  price  <- cumsum(steps) + 100 + runif(1, -5, 5)
+  tibble(item = symbol, date = dates, price = round(price, 2))
+}
+df <- bind_rows(
+  make_series("AAPL"),
+  make_series("MSFT")
+)
+
+# Compute YTD average and 6-day moving average per item
+out <- df %>%
+  arrange(item, date) %>%
+  group_by(item, yr = year(date)) %>%
+  mutate(ytd_avg = cummean(price)) %>%      # resets each year within each item
+  ungroup() %>%
+  group_by(item) %>%
+  mutate(ma6 = slide_dbl(price, mean, .before = 5, .complete = TRUE)) %>%
+  ungroup()
+
+# Peek
+dplyr::glimpse(out)
+# head(out, 12)
+```
