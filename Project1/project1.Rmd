@@ -1,0 +1,75 @@
+---
+title: "Project1"
+output: html_document
+date: "2025-09-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(dplyr)
+library(readr)
+library(purrr)
+library(tibble)
+```
+
+
+```{r parser}
+txt <- readLines("tournamentinfo.txt")
+raw <- paste(txt, collapse = "\n")
+blocks <- str_split(raw, "-{5,}\\s*\\n", simplify = TRUE) |>
+  as.vector() |>
+  keep(~ str_squish(.x) != "")
+
+# Parser for a single two-line player block
+parse_player <- function(block) {
+  name_line <- str_match(block,
+    "(?m)^\\s*(\\d+)\\s*\\|\\s*([A-Z' .-]+?)\\s*\\|\\s*([0-9.]+)\\s*\\|(.*)\\|\\s*$"
+  )
+  state_line <- str_match(block,
+    "(?m)^\\s*([A-Z]{2})\\s*\\|\\s*\\d+\\s*/\\s*R:\\s*(\\d+)[A-Z]*\\d*\\s*->\\s*\\d+"
+  )
+
+  if (any(is.na(name_line)) || any(is.na(state_line))) return(NULL)
+
+  pairNum   <- as.integer(name_line[2])
+  name      <- str_squish(name_line[3])
+  totalPts  <- as.numeric(name_line[4])
+  roundsStr <- name_line[5]
+  state     <- state_line[2]
+  preRating <- as.integer(state_line[3])
+
+  # Extract opponent pair numbers from W/L/D results
+  opps <- str_match_all(roundsStr, "[WLD]\\s*(\\d+)")[[1]]
+  opps <- if (length(opps)) as.integer(opps[,2]) else integer()
+
+  tibble(pairNum, name, state, totalPts, preRating, opps = list(opps))
+}
+
+players <- map(blocks, parse_player) |> compact()
+
+players <- bind_rows(players)
+stopifnot(is_tibble(players), nrow(players) > 0)
+
+ratingByPair <- setNames(players$preRating, players$pairNum)
+
+avgOpp <- map_dbl(players$opps, function(os) {
+  if (length(os) == 0) return(NA_real_)
+  round(mean(ratingByPair[as.character(os)]))
+})
+
+out <- players |>
+  mutate(
+    `Player Name` = str_to_title(name),
+    `Player State` = state,
+    `Total Points` = totalPts,
+    `Pre Rating` = preRating,
+    `Average Opponent Pre Rating` = avgOpp
+  ) |>
+  select(`Player Name`, `Player State`, `Total Points`, `Pre Rating`, `Average Opponent Pre Rating`) |>
+  arrange(desc(`Total Points`), `Player Name`)
+
+write_csv(out, "tournament_results.csv")
+out %>% head(10)
+```
+
