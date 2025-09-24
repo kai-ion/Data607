@@ -1,0 +1,7 @@
+city,airlineA_onTime,airlineA_delayed,airlineB_onTime,airlineB_delayed
+NYC,320.0,180.0,280.0,220
+LAX,210.0,190.0,260.0,140
+ORD,,160.0,190.0,210
+ATL,180.0,220.0,,200
+DFW,150.0,,170.0,180
+Overall,860.0,750.0,900.0,950
