@@ -1,0 +1,421 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  letterpaper,
+  DIV=11,
+  numbers=noendperiod]{scrartcl}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{anyfontsize}
+\usepackage{multirow}
+\KOMAoption{captions}{tableheading}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={IS 607 -- Project 2: NFL QB Leaders (Wide → Tidy)},
+  pdfauthor={Cai Lin},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\title{IS 607 -- Project 2: NFL QB Leaders (Wide → Tidy)}
+\author{Cai Lin}
+\date{}
+\begin{document}
+\maketitle
+
+
+\subsection{Introduction}\label{introduction}
+
+This mini-analysis uses a current snapshot of NFL quarterback passing
+leaders. I start from a single-stat leaderboard, intentionally reshape
+it into a wide layout to simulate a common ``wide'' data scenario, then
+tidy it back to long with \texttt{tidyr}. I summarize who leads in
+passing yards and provide a brief interpretation. The main goal is to
+demonstrate correct wide→tidy transformations and produce readable,
+publication-quality output.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Setup}
+\FunctionTok{library}\NormalTok{(readr)}
+\FunctionTok{library}\NormalTok{(dplyr)}
+\FunctionTok{library}\NormalTok{(tidyr)}
+\FunctionTok{library}\NormalTok{(gt)}
+
+\NormalTok{qb }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{"nfl\_qb\_passing\_leaders\_2025\_top5.csv"}\NormalTok{, }\AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{)}
+
+\CommentTok{\# Keep a tidy version for analysis}
+\NormalTok{qbTidy }\OtherTok{\textless{}{-}}\NormalTok{ qb }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{transmute}\NormalTok{(}
+\NormalTok{    player,}
+\NormalTok{    team,}
+\NormalTok{    stat,}
+    \AttributeTok{yards =}\NormalTok{ value,}
+\NormalTok{    asOfDate}
+\NormalTok{  )}
+
+\NormalTok{qbTidy }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(yards)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tab\_header}\NormalTok{(}\AttributeTok{title =} \StringTok{"NFL QB Passing Leaders — Tidy Snapshot"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =}\NormalTok{ yards, }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{cols\_label}\NormalTok{(}
+    \AttributeTok{player =} \StringTok{"Player"}\NormalTok{,}
+    \AttributeTok{team =} \StringTok{"Team"}\NormalTok{,}
+    \AttributeTok{stat =} \StringTok{"Stat"}\NormalTok{,}
+    \AttributeTok{yards =} \StringTok{"Yards"}\NormalTok{,}
+    \AttributeTok{asOfDate =} \StringTok{"As of"}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\fontsize{20}{25}\selectfont  NFL QB Passing Leaders \textemdash Tidy Snapshot\fontsize{12}{15}\selectfont }
+} 
+\fontsize{12.0pt}{14.0pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lllrr}
+\toprule
+Player & Team & Stat & Yards & As of \\ 
+\midrule\addlinespace[2.5pt]
+Sam Darnold & SEA & Passing Yards & 905 & 20359 \\ 
+Justin Herbert & LAC & Passing Yards & 860 & 20359 \\ 
+Geno Smith & LV & Passing Yards & 831 & 20359 \\ 
+Daniel Jones & IND & Passing Yards & 816 & 20359 \\ 
+Dak Prescott & DAL & Passing Yards & 800 & 20359 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{qbTidy }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(yards)) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{head}\NormalTok{(}\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+# A tibble: 5 x 5
+  player         team  stat          yards asOfDate  
+  <chr>          <chr> <chr>         <dbl> <date>    
+1 Sam Darnold    SEA   Passing Yards   905 2025-09-28
+2 Justin Herbert LAC   Passing Yards   860 2025-09-28
+3 Geno Smith     LV    Passing Yards   831 2025-09-28
+4 Daniel Jones   IND   Passing Yards   816 2025-09-28
+5 Dak Prescott   DAL   Passing Yards   800 2025-09-28
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{qbWide }\OtherTok{\textless{}{-}}\NormalTok{ qbTidy }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{select}\NormalTok{(stat, player, yards) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ player, }\AttributeTok{values\_from =}\NormalTok{ yards)}
+
+\NormalTok{qbLong }\OtherTok{\textless{}{-}}\NormalTok{ qbWide }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{pivot\_longer}\NormalTok{(}
+    \AttributeTok{cols =} \SpecialCharTok{{-}}\NormalTok{stat,}
+    \AttributeTok{names\_to =} \StringTok{"player"}\NormalTok{,}
+    \AttributeTok{values\_to =} \StringTok{"yards"}
+\NormalTok{  ) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{left\_join}\NormalTok{(}\FunctionTok{distinct}\NormalTok{(qbTidy, player, team, asOfDate), }\AttributeTok{by =} \StringTok{"player"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{relocate}\NormalTok{(team, }\AttributeTok{.after =}\NormalTok{ player)}
+
+\NormalTok{qbLong }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(yards)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tab\_header}\NormalTok{(}\AttributeTok{title =} \StringTok{"Tidy Table Recovered from Wide"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =}\NormalTok{ yards, }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{cols\_label}\NormalTok{(}
+    \AttributeTok{player =} \StringTok{"Player"}\NormalTok{,}
+    \AttributeTok{team =} \StringTok{"Team"}\NormalTok{,}
+    \AttributeTok{stat =} \StringTok{"Stat"}\NormalTok{,}
+    \AttributeTok{yards =} \StringTok{"Yards"}\NormalTok{,}
+    \AttributeTok{asOfDate =} \StringTok{"As of"}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\fontsize{20}{25}\selectfont  Tidy Table Recovered from Wide\fontsize{12}{15}\selectfont }
+} 
+\fontsize{12.0pt}{14.0pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lllrr}
+\toprule
+Stat & Player & Team & Yards & As of \\ 
+\midrule\addlinespace[2.5pt]
+Passing Yards & Sam Darnold & SEA & 905 & 20359 \\ 
+Passing Yards & Justin Herbert & LAC & 860 & 20359 \\ 
+Passing Yards & Geno Smith & LV & 831 & 20359 \\ 
+Passing Yards & Daniel Jones & IND & 816 & 20359 \\ 
+Passing Yards & Dak Prescott & DAL & 800 & 20359 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Example analyses}
+\NormalTok{leader }\OtherTok{\textless{}{-}}\NormalTok{ qbLong }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{arrange}\NormalTok{(}\FunctionTok{desc}\NormalTok{(yards)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{slice\_head}\NormalTok{(}\AttributeTok{n =} \DecValTok{1}\NormalTok{)}
+
+\NormalTok{summaryStats }\OtherTok{\textless{}{-}}\NormalTok{ qbLong }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{summarize}\NormalTok{(}
+    \AttributeTok{avgYards =} \FunctionTok{mean}\NormalTok{(yards, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{maxYards =} \FunctionTok{max}\NormalTok{(yards, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{minYards =} \FunctionTok{min}\NormalTok{(yards, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{),}
+    \AttributeTok{spread =}\NormalTok{ maxYards }\SpecialCharTok{{-}}\NormalTok{ minYards}
+\NormalTok{  )}
+
+\NormalTok{leader }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{select}\NormalTok{(player, team, yards) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tab\_header}\NormalTok{(}\AttributeTok{title =} \StringTok{"Leader"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{fmt\_number}\NormalTok{(}\AttributeTok{columns =}\NormalTok{ yards, }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\fontsize{20}{25}\selectfont  Leader\fontsize{12}{15}\selectfont }
+} 
+\fontsize{12.0pt}{14.0pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llr}
+\toprule
+player & team & yards \\ 
+\midrule\addlinespace[2.5pt]
+Sam Darnold & SEA & 905 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summaryStats }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{gt}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{tab\_header}\NormalTok{(}\AttributeTok{title =} \StringTok{"Summary of Yards (Top 5)"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{fmt\_number}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\AttributeTok{decimals =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption*{
+{\fontsize{20}{25}\selectfont  Summary of Yards (Top 5)\fontsize{12}{15}\selectfont }
+} 
+\fontsize{12.0pt}{14.0pt}\selectfont
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}rrrr}
+\toprule
+avgYards & maxYards & minYards & spread \\ 
+\midrule\addlinespace[2.5pt]
+842 & 905 & 800 & 105 \\ 
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Save outputs for your project folder}
+\FunctionTok{write\_csv}\NormalTok{(qbWide, }\StringTok{"qb\_passing\_wide.csv"}\NormalTok{)}
+\FunctionTok{write\_csv}\NormalTok{(qbLong, }\StringTok{"qb\_passing\_tidy.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+
+
+
+
+\end{document}

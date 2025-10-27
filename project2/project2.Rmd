@@ -1,0 +1,126 @@
+---
+title: "IS 607 – Project 2: NFL QB Leaders (Wide → Tidy)"
+author: "Cai Lin"
+format:
+  html:
+    code-fold: true
+  pdf: default
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Introduction
+This mini-analysis uses a current snapshot of NFL quarterback passing leaders. I start from a single-stat leaderboard, intentionally reshape it into a wide layout to simulate a common “wide” data scenario, then tidy it back to long with `tidyr`. I summarize who leads in passing yards and provide a brief interpretation. The main goal is to demonstrate correct wide→tidy transformations and produce readable, publication-quality output.
+
+
+```{r setup}
+# Setup
+library(readr)
+library(dplyr)
+library(tidyr)
+library(gt)
+
+qb <- read_csv("nfl_qb_passing_leaders_2025_top5.csv", show_col_types = FALSE)
+
+# Keep a tidy version for analysis
+qbTidy <- qb %>%
+  transmute(
+    player,
+    team,
+    stat,
+    yards = value,
+    asOfDate
+  )
+
+qbTidy |>
+  arrange(desc(yards)) |>
+  gt() |>
+  tab_header(title = "NFL QB Passing Leaders — Tidy Snapshot") |>
+  fmt_number(columns = yards, decimals = 0) |>
+  cols_label(
+    player = "Player",
+    team = "Team",
+    stat = "Stat",
+    yards = "Yards",
+    asOfDate = "As of"
+  )
+
+qbTidy %>% 
+  arrange(desc(yards)) %>% 
+  head(10)
+
+qbWide <- qbTidy |>
+  select(stat, player, yards) |>
+  pivot_wider(names_from = player, values_from = yards)
+
+qbLong <- qbWide |>
+  pivot_longer(
+    cols = -stat,
+    names_to = "player",
+    values_to = "yards"
+  ) |>
+  left_join(distinct(qbTidy, player, team, asOfDate), by = "player") |>
+  relocate(team, .after = player)
+
+qbLong |>
+  arrange(desc(yards)) |>
+  gt() |>
+  tab_header(title = "Tidy Table Recovered from Wide") |>
+  fmt_number(columns = yards, decimals = 0) |>
+  cols_label(
+    player = "Player",
+    team = "Team",
+    stat = "Stat",
+    yards = "Yards",
+    asOfDate = "As of"
+  )
+
+# Example analyses
+leader <- qbLong |>
+  arrange(desc(yards)) |>
+  slice_head(n = 1)
+
+summaryStats <- qbLong |>
+  summarize(
+    avgYards = mean(yards, na.rm = TRUE),
+    maxYards = max(yards, na.rm = TRUE),
+    minYards = min(yards, na.rm = TRUE),
+    spread = maxYards - minYards
+  )
+
+leader |>
+  select(player, team, yards) |>
+  gt() |>
+  tab_header(title = "Leader") |>
+  fmt_number(columns = yards, decimals = 0)
+
+summaryStats |>
+  gt() |>
+  tab_header(title = "Summary of Yards (Top 5)") |>
+  fmt_number(everything(), decimals = 0)
+
+# Save outputs for your project folder
+write_csv(qbWide, "qb_passing_wide.csv")
+write_csv(qbLong, "qb_passing_tidy.csv")
+
+```
+#Data import and cleanup
+
+I read in the CSV of the top five NFL quarterbacks by passing yards. I renamed value to yards and kept only the needed columns (player, team, stat, yards, asOfDate) to make the dataset clearer and easier to analyze.
+
+#Wide format
+
+I reshaped the tidy table into wide form with pivot_wider(), creating one row per stat and one column per player. This demonstrates how data can be stored in a less analysis-friendly format.
+
+#Back to tidy
+
+I then used pivot_longer() to return the data to tidy form, with each row showing one player’s passing yards. I rejoined the team and date fields so the dataset was complete.
+
+#Analysis
+
+From the tidy data I identified the leader in yards and calculated summary statistics (average, max, min, spread).
+
+#Conclusion
+The current leader holds the highest passing yardage in this snapshot. The remaining players are relatively close, with an average in the low-to-mid 800s and a modest spread from first to fifth.
