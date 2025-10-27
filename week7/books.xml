@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<books subject="Computer Security">
+  <book id="1">
+    <title>Practical Malware Analysis</title>
+    <authors>
+      <author>Michael Sikorski</author>
+      <author>Andrew Honig</author>
+    </authors>
+    <year>2012</year>
+    <publisher>No Starch Press</publisher>
+    <isbn>9781593272906</isbn>
+  </book>
+  <book id="2">
+    <title>The Web Application Hacker's Handbook (2nd Edition)</title>
+    <authors>
+      <author>Dafydd Stuttard</author>
+      <author>Marcus Pinto</author>
+    </authors>
+    <year>2011</year>
+    <publisher>Wiley</publisher>
+    <isbn>9781118026472</isbn>
+  </book>
+  <book id="3">
+    <title>Serious Cryptography</title>
+    <authors>
+      <author>Jean-Philippe Aumasson</author>
+    </authors>
+    <year>2017</year>
+    <publisher>No Starch Press</publisher>
+    <isbn>9781593278267</isbn>
+  </book>
+</books>

@@ -1,0 +1,81 @@
+---
+title: "rbook"
+output: html_document
+date: "2025-10-11"
+---
+
+```{r setup, include=FALSE}
+# Packages
+library(jsonlite)
+library(xml2)
+library(rvest)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(tibble)
+```
+
+
+```{r load file}
+basePath <- "."
+
+# 1) HTML -> dfHtml
+htmlPath <- file.path(basePath, "books.html")
+htmlTabs <- read_html(htmlPath) |>
+  html_table(header = TRUE, fill = TRUE, trim = TRUE)
+
+dfHtml <- htmlTabs[[1]] |>
+  dplyr::rename_with(~ tolower(.x)) |>
+  mutate(authors = stringr::str_replace_all(authors, "\\s*;\\s*", "; "))
+
+# 2) XML -> dfXml
+xmlPath <- file.path(basePath, "books.xml")
+xmlDoc  <- read_xml(xmlPath)
+xmlBooks <- xml_find_all(xmlDoc, "//book")
+
+dfXml <- tibble(
+  title = xml_text(xml_find_all(xmlBooks, "./title")),
+  authors = purrr::map_chr(xmlBooks, function(b) {
+    auths <- xml_find_all(b, "./authors/author") |> xml_text()
+    paste(auths, collapse = "; ")
+  }),
+  year = as.integer(xml_text(xml_find_all(xmlBooks, "./year"))),
+  publisher = xml_text(xml_find_all(xmlBooks, "./publisher")),
+  isbn = xml_text(xml_find_all(xmlBooks, "./isbn")),
+  subject = xml_attr(xmlDoc, "subject")
+)
+
+# 3) JSON -> dfJson
+jsonPath <- file.path(basePath, "books.json")
+dfJson <- jsonlite::fromJSON(jsonPath, flatten = TRUE) |>
+  tibble::as_tibble() |>
+  mutate(authors = purrr::map_chr(authors, ~ paste(.x, collapse = "; ")))
+
+```
+
+
+```{r Normalize and check for equality}
+normalizeDf <- function(df) {
+  df |>
+    mutate(
+      title = as.character(title),
+      authors = as.character(authors),
+      year = as.integer(year),
+      publisher = as.character(publisher),
+      isbn = as.character(isbn),
+      subject = as.character(subject)
+    ) |>
+    select(title, authors, year, publisher, isbn, subject) |>
+    arrange(title)
+}
+
+dfHtmlN <- normalizeDf(dfHtml)
+dfXmlN  <- normalizeDf(dfXml)
+dfJsonN <- normalizeDf(dfJson)
+
+identical(dfHtmlN, dfXmlN)
+identical(dfHtmlN, dfJsonN)
+identical(dfXmlN, dfJsonN)
+```
+The analysis found that all three data sources—HTML, XML, and JSON—contained the same information about the selected books after being normalized in R.
+

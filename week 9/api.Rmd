@@ -1,0 +1,88 @@
+---
+title: "week9"
+output: html_document
+date: "2025-10-27"
+---
+
+```{r setup, include=FALSE}
+# ---- Setup ----
+# install.packages(c("httr", "jsonlite", "dplyr", "tidyr", "purrr"))
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(knitr)
+
+apiKey <- Sys.getenv("API_KEY")
+apiSecret <- Sys.getenv("API_SECRET") # only needed for client-credentials
+stopifnot(nchar(apiKey) > 0)
+```
+
+```{r fetch}
+fetchJson <- function(url, query = list()) {
+  resp <- httr::GET(url, query = query, httr::user_agent("web-apis-assignment/1.0"))
+  httr::stop_for_status(resp)
+  jsonlite::fromJSON(httr::content(resp, as = "text", encoding = "UTF-8"), flatten = TRUE)
+}
+
+pick_col <- function(df, candidates, fill = NA_character_) {
+  for (cn in candidates) if (cn %in% names(df)) return(df[[cn]])
+  if (is.na(fill)) rep(NA, nrow(df)) else rep(fill, nrow(df))
+}
+
+# ---- NYT Article Search ----
+fetchArticlesPage <- function(queryString, beginDate = NULL, endDate = NULL, page = 0) {
+  baseUrl <- "https://api.nytimes.com/svc/search/v2/articlesearch.json"
+  fetchJson(
+    url = baseUrl,
+    query = list(
+      q = queryString,
+      begin_date = beginDate,
+      end_date   = endDate,
+      `api-key`  = apiKey,   # <-- pass your key here
+      page       = page
+    )
+  )
+}
+
+# ---- Run: fetch, tidy, display ----
+res  <- fetchArticlesPage("climate", beginDate = "20200101", endDate = format(Sys.Date(), "%Y%m%d"), page = 0)
+docs <- res$response$docs
+stopifnot(!is.null(docs), length(docs) > 0)
+
+df <- as.data.frame(docs, stringsAsFactors = FALSE)
+
+articlesDF <- data.frame(
+  headline      = pick_col(df, c("headline.main", "title", "name")),
+  pubDate       = as.POSIXct(pick_col(df, c("pub_date", "published_date", "date")), tz = "UTC"),
+  sectionName   = pick_col(df, c("section_name", "section", "subsection", "category")),
+  byline        = pick_col(df, c("byline.original", "byline")),
+  abstract      = pick_col(df, c("abstract", "description", "summary")),
+  webUrl        = pick_col(df, c("web_url", "url", "link")),
+  stringsAsFactors = FALSE
+)
+
+kwList <- if ("keywords" %in% names(df)) {
+  lapply(df$keywords, function(x) {
+    if (is.null(x)) character()
+    else if (is.data.frame(x) && "value" %in% names(x)) x$value
+    else if (is.list(x) && length(x) > 0 && all(vapply(x, is.character, logical(1)))) unlist(x)
+    else if (is.character(x)) x
+    else character()
+  })
+} else replicate(nrow(df), character(), simplify = FALSE)
+
+keywordsDF <- tidyr::unnest_longer(
+  data = data.frame(webUrl = articlesDF$webUrl, keywords = I(kwList)),
+  col = keywords,
+  values_to = "keyword",
+  indices_include = FALSE
+)
+
+# Display in knit output
+print(utils::head(articlesDF, 8))
+print(utils::head(keywordsDF, 10))
+knitr::kable(utils::head(articlesDF, 8), caption = "Sample Articles")
+knitr::kable(utils::head(keywordsDF, 10), caption = "Top Keywords")
+```
