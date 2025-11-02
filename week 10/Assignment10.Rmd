@@ -1,0 +1,182 @@
+---
+title: "Assignment 10A: Sentiment Analysis"
+author: "Your Name"
+date: "2025-10-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
+library(tidytext)
+library(textdata)
+library(ggplot2)
+library(janeaustenr)
+library(knitr)
+theme_set(theme_minimal())
+```
+
+# Introduction
+This assignment reproduces the sentiment analysis example from
+Chapter 2 of "Text Mining with R" by Julia Silge and David Robinson (2017),
+and extends it by:
+1. Using a different corpus,
+2. Adding another sentiment lexicon.
+
+Citation:
+Silge, J. & Robinson, D. (2017). Text Mining with R: A Tidy Approach. O’Reilly Media.
+https://www.tidytextmining.com/sentiment.html
+
+
+```{r austen-base}
+# 1. BASE EXAMPLE (Jane Austen books from the janeaustenr package)
+
+# Load and annotate Austen text with line numbers and chapters
+austenBooks <- austen_books() %>%
+  group_by(book) %>%
+  mutate(
+    lineNumber = row_number(),
+    chapter = cumsum(str_detect(text, regex("^chapter [\\divxlc]", ignore_case = TRUE)))
+  ) %>%
+  ungroup()
+
+# Use tidytext stop words
+data("stop_words")
+
+# Tokenize (one word per row), remove stop words
+tidyAusten <- austenBooks %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word")
+
+# Get the "bing" sentiment lexicon (positive / negative labels)
+bingLex <- get_sentiments("bing")
+
+# Join tokens with sentiment, then summarize sentiment over the narrative
+austenSentiment <- tidyAusten %>%
+  inner_join(bingLex, by = "word") %>%
+  count(book, index = lineNumber %/% 80, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(sentimentScore = positive - negative)
+
+# Plot sentiment trajectory by book
+ggplot(austenSentiment, aes(index, sentimentScore, fill = book)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ book, scales = "free_x") +
+  labs(
+    title = "Sentiment Over Time (Jane Austen Books)",
+    subtitle = "Positive - Negative word counts using the Bing lexicon",
+    x = "Narrative Index (~80 lines)",
+    y = "Sentiment Score"
+  )
+```
+
+```{r my-corpus}
+# 2. NEW CORPUS
+
+# Read your own text data as one big document
+myCorpus <- tibble(
+  docId = 1,
+  text = read_file("my_corpus.txt")
+)
+
+# Tokenize your corpus and remove stop words
+myCorpusTidy <- myCorpus %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word")
+
+# Peek at first few tokens from your corpus
+head(myCorpusTidy)
+```
+
+```{r my-sentiment}
+# 3. SENTIMENT ANALYSIS ON YOUR CORPUS
+#
+# We'll use two lexicons:
+# - "bing": positive / negative
+# - "afinn": numeric score (negative to positive)
+
+bingLex <- get_sentiments("bing")
+afinnLex <- get_sentiments("afinn")
+
+# Bing summary: how many positive vs negative words?
+bingSummary <- myCorpusTidy %>%
+  inner_join(bingLex, by = "word") %>%
+  count(sentiment) %>%
+  mutate(percent = n / sum(n) * 100)
+
+# AFINN summary: numeric sentiment score stats
+afinnSummary <- myCorpusTidy %>%
+  inner_join(afinnLex, by = "word") %>%
+  summarize(
+    meanScore = mean(value),
+    totalScore = sum(value),
+    wordCountMatched = n()
+  )
+
+# Show both summaries as nice tables
+kable(bingSummary, caption = "Positive vs Negative (Bing Lexicon)")
+kable(afinnSummary, caption = "AFINN Sentiment Summary")
+```
+
+```{r my-sentiment-trend}
+# 4. SENTIMENT TREND OVER THE DOCUMENT
+#
+# We'll approximate "time" by token position and then look at sentiment score
+# in bins of 50 tokens.
+
+timeline <- myCorpusTidy %>%
+  mutate(position = row_number()) %>%
+  inner_join(afinnLex, by = "word") %>%
+  group_by(bin = position %/% 50) %>%
+  summarize(avgSentiment = mean(value), .groups = "drop")
+
+ggplot(timeline, aes(x = bin, y = avgSentiment)) +
+  geom_line(linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Sentiment Trend (AFINN)",
+    x = "Token Bin (50-word groups)",
+    y = "Average Sentiment Score"
+  )
+```
+
+```{r my-nrc}
+# 5. EXTRA LEXICON: NRC EMOTION CATEGORIES
+#
+# The NRC lexicon labels words with emotions like joy, fear, anger, trust, etc.
+# This goes beyond positive/negative and gives you richer interpretation.
+
+nrcLex <- get_sentiments("nrc")
+
+nrcSummary <- myCorpusTidy %>%
+  inner_join(nrcLex, by = "word") %>%
+  count(sentiment, sort = TRUE)
+
+kable(nrcSummary, caption = "Emotion Distribution (NRC Lexicon)")
+```
+
+
+# Explanation:
+The Jane Austen example above follows the workflow in Silge & Robinson (2017),
+Chapter 2 of 'Text Mining with R'. I tokenized text, removed stop words,
+joined each token to a sentiment lexicon (bing), and then plotted sentiment
+over the narrative.
+
+# Extension:
+I then applied the same pipeline to my own corpus (my_corpus.txt). This
+satisfies the requirement to work with a different corpus.
+
+# Additional lexicon:
+I added two sentiment lexicons beyond the basic positive/negative view:
+AFINN (numeric polarity scores) and NRC (emotion categories like joy,
+trust, anger). This satisfies the requirement to incorporate at least one
+additional sentiment lexicon beyond the one in the book.
+
+# Interpretation:
+- The Bing results show how often my corpus uses positive vs negative words.
+- The AFINN results quantify overall tone by averaging signed scores,
+  showing whether the document trends positive or negative.
+- The NRC summary shows which emotions dominate the corpus.
+
