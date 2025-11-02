@@ -1,0 +1,249 @@
+---
+title: "Assignment 10B: More JSON Practice"
+author: "Your Name"
+date: "2025-11-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+library(rlang)
+library(ggplot2)
+library(knitr)
+```
+
+## Introduction
+
+In this assignment, I use the public Nobel Prize API ([https://www.nobelprize.org/about/developer-zone-2/](https://www.nobelprize.org/about/developer-zone-2/)) to download JSON data about Nobel laureates and Nobel Prizes. I ask and answer four questions:
+
+1. Which birth countries produced the most Nobel laureates overall?
+2. Which countries “lost” the most laureates (people born there but affiliated with an institution in a different country at the time of the award)?
+3. Which Nobel Prize categories most often have shared prizes (more than one winner in the same year)?
+4. Has the average age at award increased over time?
+
+The workflow is:
+
+* Load JSON using jsonlite::fromJSON
+* Unnest nested list columns (like prizes per laureate, affiliations)
+* Summarize with dplyr
+* Visualize with ggplot2
+
+```{r load-and-clean}
+# Load laureate-level data from the Nobel API
+laureatesRaw <- fromJSON("https://api.nobelprize.org/2.1/laureates", flatten = TRUE)
+
+# Load prize-level data from the Nobel API
+prizesRaw <- fromJSON("https://api.nobelprize.org/2.1/nobelPrizes", flatten = TRUE)
+
+# Extract main data frames
+laureates <- laureatesRaw$laureates
+prizes <- prizesRaw$nobelPrizes
+
+# The laureates data has a list-column nobelPrizes for each person.
+# We'll unnest that so each row = one (laureate, prize they received).
+laureatePrizes <- laureates %>%
+  select(
+    laureateId = id,
+    givenName = givenName.en,
+    familyName = familyName.en,
+    birthDate = birth.date,
+    birthCountry = birth.place.country.en,
+    nobelPrizes
+  ) %>%
+  unnest(nobelPrizes) %>%
+  # affiliations is itself a list of one or more institutions.
+  # We'll grab the first affiliation's country as a proxy
+  mutate(
+    affiliationCountryList = map(affiliations, ~ .x$country.en),
+    firstAffiliationCountry = map_chr(
+      affiliationCountryList,
+      ~ ifelse(length(.x) == 0, NA, .x[1])
+    )
+  ) %>%
+  transmute(
+    laureateId,
+    fullName = str_trim(paste(givenName, familyName)),
+    birthDate,
+    birthCountry,
+    awardYear = awardYear,
+    category = category.en,
+    prizeCountryAtAward = firstAffiliationCountry
+  )
+
+# Peek at the cleaned rectangular data
+head(laureatePrizes)
+```
+
+## Question 1. Which birth countries produced the most Nobel laureates overall?
+
+We group unique laureates by their reported birth country and count how many distinct laureates were born in each country. This tells us which countries produced the most Nobel Prize winners (regardless of where they later worked).
+
+```{r q1-country-of-birth}
+laureatesByBirthCountry <- laureatePrizes %>%
+  distinct(laureateId, fullName, birthCountry) %>%
+  count(birthCountry, sort = TRUE)
+
+# Show the top 10 birth countries by number of Nobel laureates
+topBirthCountries <- head(laureatesByBirthCountry, 10)
+
+kable(
+  topBirthCountries,
+  caption = "Top birth countries of Nobel laureates (by count of unique laureates)"
+)
+```
+
+Interpretation:
+The table above shows the countries that produced the most Nobel laureates by birthplace. These countries tend to be places with long-standing research institutions, strong universities, and access to scientific or cultural capital that supports award-winning work.
+
+## Question 2. Which country “lost” the most laureates?
+
+Definition:
+A country “loses” a laureate if the person was born there, but at the time of winning the Nobel Prize, their affiliation was in a different country. We compare each laureate's birthCountry to the country of their affiliation when the prize was awarded (prizeCountryAtAward). If those differ, we consider that an outbound migration.
+
+We then count how many distinct laureates each birth country “lost.”
+
+```{r q2-talent-loss}
+# Mark whether the laureate was in a different country at award time
+migration <- laureatePrizes %>%
+  filter(!is.na(birthCountry), !is.na(prizeCountryAtAward)) %>%
+  mutate(migrated = birthCountry != prizeCountryAtAward)
+
+# Count "losses": people born in X but awarded in Y != X
+lossByBirthCountry <- migration %>%
+  filter(migrated) %>%
+  distinct(laureateId, birthCountry) %>%
+  count(birthCountry, sort = TRUE)
+
+topLossCountries <- head(lossByBirthCountry, 10)
+
+kable(
+  topLossCountries,
+  caption = "Birth countries that saw the most laureates win abroad (talent 'lost')"
+)
+```
+
+We can also flip the view and see “gains”: which award countries benefited from talent born elsewhere.
+
+```{r q2-talent-gain}
+gainByAwardCountry <- migration %>%
+  filter(migrated) %>%
+  distinct(laureateId, prizeCountryAtAward) %>%
+  count(prizeCountryAtAward, sort = TRUE)
+
+topGainCountries <- head(gainByAwardCountry, 10)
+
+kable(
+  topGainCountries,
+  caption = "Award affiliation countries that gained talent born elsewhere (talent 'gained')"
+)
+```
+
+Interpretation:
+The first table ranks the countries where many laureates were born but ultimately received the Nobel Prize under a different country's affiliation. This suggests outbound migration of highly successful researchers or creators.
+The second table shows where that talent tends to go at award time. Typically we see a small number of countries repeatedly appearing as the affiliation country for award-winning work, indicating they attract or retain top researchers.
+
+## Question 3. Which Nobel categories most often have shared prizes?
+
+Some Nobel Prizes are awarded to multiple people in the same category and year (for example, three physicists sharing Physics in a given year). Other categories, like Literature, are usually given to a single person.
+
+We measure this by:
+
+1. For each (awardYear, category), count distinct laureates.
+2. Take the average of that count per category.
+
+Higher average winners per prize = category that tends to be shared.
+
+```{r q3-shared-prizes}
+# Count distinct laureates per (year, category)
+perYearCategoryCounts <- laureatePrizes %>%
+  group_by(awardYear, category) %>%
+  summarize(
+    winnerCount = n_distinct(laureateId),
+    .groups = "drop"
+  )
+
+# Average team size by category
+avgWinnersPerCategory <- perYearCategoryCounts %>%
+  group_by(category) %>%
+  summarize(
+    avgLaureatesPerPrize = mean(winnerCount),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avgLaureatesPerPrize))
+
+kable(
+  avgWinnersPerCategory,
+  digits = 2,
+  caption = "Average number of laureates per prize (higher means prizes are often shared)"
+)
+```
+
+Interpretation:
+Scientific categories like Physics, Chemistry, and Medicine/Physiology often have multiple laureates for a single year's award. This reflects collaborative lab work and co-discovery. Categories like Literature tend to have an average close to 1, which fits the idea of recognizing a single author's body of work.
+
+## Question 4. Has the average age at award increased over time?
+
+We approximate each laureate’s age when they received the Nobel Prize as:
+
+ageAtAward = awardYear - birthYear
+
+Then we look at how that average changes over time by decade and by category.
+
+```{r q4-age-compute}
+laureateAges <- laureatePrizes %>%
+  mutate(
+    birthYear = as.numeric(substr(birthDate, 1, 4)),
+    awardYearNum = as.numeric(awardYear),
+    ageAtAward = awardYearNum - birthYear
+  ) %>%
+  filter(
+    !is.na(ageAtAward),
+    ageAtAward > 0,
+    ageAtAward < 120
+  )
+
+# Average age per decade and category
+ageByDecade <- laureateAges %>%
+  mutate(decade = floor(awardYearNum / 10) * 10) %>%
+  group_by(decade, category) %>%
+  summarize(
+    meanAge = mean(ageAtAward),
+    nAwards = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(decade, category)
+
+head(ageByDecade, 20)
+```
+
+We can also visualize how average age moves across decades. Each line represents one Nobel category.
+
+```{r q4-age-plot, fig.height=4, fig.width=7}
+ggplot(ageByDecade, aes(x = decade, y = meanAge, group = category)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Average Age of Nobel Laureates at Time of Award, by Decade",
+    x = "Decade",
+    y = "Average Age (years)"
+  )
+```
+
+Interpretation:
+The plot shows whether Nobel recognition is drifting later in careers. Many scientific categories trend toward higher ages over time, suggesting that Nobel committees often reward work with long-term, proven impact. Categories like Literature and Peace already tend to honor people later in life, so their mean ages are typically high and remain high.
+
+## Conclusion
+
+Section 1 showed which birth countries have produced the most Nobel laureates, suggesting a small number of countries dominate Nobel production.
+
+Section 2 measured migration: which countries "lose" talent (laureates born there but awarded elsewhere), and which countries "gain" talent (affiliations at award time). This highlights global movement of top researchers.
+
+Section 3 quantified how often prizes are shared within a category. Scientific prizes are often shared among multiple collaborators, while Literature is mostly single-winner.
+
+Section 4 approximated laureate age at the time of the award and tracked trends over decades. We observe that, especially in technical fields, recognition tends to come later in a career.
+
+Overall, the Nobel Prize API JSON lets us answer historical, demographic, and structural questions about how Nobel Prizes get awarded.
