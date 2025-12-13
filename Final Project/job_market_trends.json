@@ -1,0 +1,53 @@
+{
+  "high_risk_jobs": {
+    "Customer Support": {
+      "current_demand": 85000,
+      "projected_2030": 45000,
+      "trend": "declining"
+    },
+    "Retail Worker": {
+      "current_demand": 4200000,
+      "projected_2030": 2800000,
+      "trend": "declining"
+    },
+    "Truck Driver": {
+      "current_demand": 1900000,
+      "projected_2030": 1200000,
+      "trend": "declining"
+    },
+    "Security Guard": {
+      "current_demand": 1100000,
+      "projected_2030": 800000,
+      "trend": "declining"
+    }
+  },
+  "low_risk_jobs": {
+    "AI Engineer": {
+      "current_demand": 150000,
+      "projected_2030": 450000,
+      "trend": "growing"
+    },
+    "Data Scientist": {
+      "current_demand": 120000,
+      "projected_2030": 350000,
+      "trend": "growing"
+    },
+    "Research Scientist": {
+      "current_demand": 180000,
+      "projected_2030": 280000,
+      "trend": "growing"
+    },
+    "Doctor": {
+      "current_demand": 950000,
+      "projected_2030": 1100000,
+      "trend": "growing"
+    }
+  },
+  "emerging_skills": [
+    "Machine Learning",
+    "Data Analysis",
+    "AI Ethics",
+    "Human-AI Collaboration",
+    "Digital Literacy"
+  ]
+}
